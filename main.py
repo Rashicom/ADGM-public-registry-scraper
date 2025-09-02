@@ -36,10 +36,9 @@ for i in range(target_page_count):
     # batch fetch company informations
     print(Fore.LIGHTWHITE_EX)
     data = batch_fetch_campany(batch_company_ids)
-    
+
 
     # write data into csv
     write_to_csv(data)
-
-# data = retrieve_data("0010Y00001Q3mKAQAZ")
-# pprint(write_to_csv(data))
+    print(Fore.CYAN,f"Total records written: {10*(i+1)}")
+    print(Fore.CYAN,f"Total records in Doc: {captured_row_count + (10*(i+1))}")
