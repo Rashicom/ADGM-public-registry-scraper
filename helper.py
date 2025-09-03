@@ -6,6 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from formatter import fieldnames
+from calendar import calendar
+from datetime import datetime, timedelta
 
 def get_csv_row_count(filename="result.csv"):
     """Gets the number of data rows in a CSV file (excluding the header)."""
@@ -22,6 +24,24 @@ def get_csv_row_count(filename="result.csv"):
         return 0
 
 
+def get_last_row_date(filename = "result.csv"):
+    if not os.path.exists(filename):
+        # return default starting date
+        return datetime(2024,1,1).date()
+    
+    last_row = None
+    with open(filename, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            last_row = row  # keep updating until the last one
+    
+    if last_row:
+        return datetime.strptime(last_row.get("pointer_date"), "%Y-%m-%d").date() if last_row.get("pointer_date") else datetime(2024,1,1).date()
+    else:
+        # return default starting date
+        return datetime(2024,1,1).date()
+
+
 # static data
 aura_context_data = {
     "mode": "PROD",
@@ -33,11 +53,20 @@ aura_context_data = {
     "uad": True
 }
 
-def get_company_ids(page = 1, page_size = 10):
+def get_company_ids(page = 1, page_size = 10, from_date = None, to_date = None):
     search_string = "{\"advancedSearch\":[{\"fieldSetName\":\"SearchFieldsAdvGen\",\"headers\":[{\"dataType\":\"BOOLEAN\",\"fieldAPIName\":\"Is_continued__c\",\"isRequired\":false,\"label\":\"Is continued?\",\"options\":[],\"value\":\"\",\"allowRender\":true},{\"dataType\":\"PICKLIST\",\"fieldAPIName\":\"Entity_Status__c\",\"isRequired\":false,\"label\":\"Entity Status\",\"options\":[],\"value\":\"\",\"allowRender\":true},{\"dataType\":\"DATE\",\"fieldAPIName\":\"Incorporation_Date__c\",\"isRequired\":false,\"label\":\"Incorporation Date\",\"options\":[],\"value\":\"\",\"allowRender\":false},{\"dataType\":\"PICKLIST\",\"fieldAPIName\":\"Category__c\",\"isRequired\":false,\"label\":\"Category\",\"options\":[],\"value\":\"\",\"allowRender\":true}],\"isParent\":true,\"objectName\":\"Account\"}],\"advancedSearch_auditors\":[{\"fieldSetName\":\"SearchFieldsAuditor\",\"headers\":[],\"isParent\":false,\"objectName\":\"Account\",\"relationshipName\":\"Subject_Account__r\"}],\"advancedSearch_companies\":[{\"fieldSetName\":\"SearchFieldsAdvComp\",\"headers\":[],\"isParent\":true,\"objectName\":\"Account\"}],\"advancedSearch_foliostrataplanstratalot\":[{\"fieldSetName\":\"SearchFieldsFolioStrataPlanLotAdvanced\",\"headers\":[],\"isParent\":false,\"objectName\":\"Property__c\"}],\"advancedSearch_foundation\":[{\"fieldSetName\":\"SearchFieldsAdvFoun\",\"headers\":[],\"isParent\":true,\"objectName\":\"Account\"}],\"advancedSearch_general\":[{\"fieldSetName\":\"SearchFieldsAdvGen\",\"headers\":[{\"dataType\":\"BOOLEAN\",\"fieldAPIName\":\"Is_continued__c\",\"isRequired\":false,\"label\":\"Is continued?\",\"options\":[],\"value\":\"\"},{\"dataType\":\"PICKLIST\",\"fieldAPIName\":\"Entity_Status__c\",\"isRequired\":false,\"label\":\"Entity Status\",\"options\":[],\"value\":\"\"},{\"dataType\":\"DATE\",\"fieldAPIName\":\"Incorporation_Date__c\",\"isRequired\":false,\"label\":\"Incorporation Date\",\"options\":[],\"value\":\"\"},{\"dataType\":\"PICKLIST\",\"fieldAPIName\":\"Category__c\",\"isRequired\":false,\"label\":\"Category\",\"options\":[],\"value\":\"\"}],\"isParent\":true,\"objectName\":\"Account\"}],\"advancedSearch_InsolvencyPractitioner\":[{\"fieldSetName\":\"SearchFieldsInsolvencyPractitioner\",\"headers\":[],\"isParent\":false,\"objectName\":\"Account\",\"relationshipName\":\"Subject_Account__r\"}],\"advancedSearch_partnership\":[{\"fieldSetName\":\"SearchFieldsAdvPart\",\"headers\":[],\"isParent\":true,\"objectName\":\"Account\"}],\"advancedsearch_RegisteredBuilding\":[{\"fieldSetName\":\"SearchFieldsLeaseAdvancedBuilding\",\"headers\":[],\"isParent\":false,\"objectName\":\"Linked_Unit__c\"}],\"advancedsearch_RegisteredLand\":[{\"fieldSetName\":\"SearchFieldsLeaseAdvancedLand\",\"headers\":[],\"isParent\":false,\"objectName\":\"Linked_Unit__c\"}],\"advancedsearch_RegisteredLease\":[{\"fieldSetName\":\"SearchFieldsLeaseAdvanced\",\"headers\":[],\"isParent\":false,\"objectName\":\"Linked_Unit__c\"}],\"advancedsearch_RegisteredUnit\":[{\"fieldSetName\":\"SearchFieldsLeaseAdvancedUnit\",\"headers\":[],\"isParent\":false,\"objectName\":\"Linked_Unit__c\"}],\"advancedSearch_reservedname\":[{\"fieldSetName\":\"ReservedName\",\"headers\":[],\"isParent\":true,\"objectName\":\"Trade_Name__c\"}],\"advancedSearch_role\":[{\"fieldSetName\":\"RoleSearchFields\",\"headers\":[],\"isParent\":true,\"objectName\":\"Role__c\"},{\"fieldSetName\":\"RoleFieldSet\",\"headers\":[],\"isParent\":false,\"objectName\":\"Account\",\"relationshipName\":\"Subject_Account__r\"}],\"advancedSearch_temporarypermit\":[{\"fieldSetName\":\"TempPermitSearchFields\",\"headers\":[],\"isParent\":true,\"objectName\":\"Account\"}],\"buttonConfig\":{\"buttonPlacement\":\"RIGHT\",\"buttons\":[{\"actionType\":\"Create_BookMark\",\"label\":\"Add to Watchlist\",\"renderCheckField\":\"Show_Request_Option__c\",\"renderCheckValue\":\"Add BookMark\",\"styleClass\":\"requestBtn\"},{\"actionType\":\"Remove_BookMark\",\"label\":\"Remove from Watchlist\",\"renderCheckField\":\"Show_Request_Option__c\",\"renderCheckValue\":\"Remove BookMark\",\"styleClass\":\"cancelBtn\"}],\"canSelectMultiple\":false,\"rowLevel\":true},\"defaultOrderBy\":\"ASC\",\"generalSearch\":[{\"fieldSetName\":\"SearchFields\",\"headers\":[{\"dataType\":\"STRING\",\"fieldAPIName\":\"Name\",\"isRequired\":false,\"label\":\"Account Name\",\"options\":[],\"value\":\"\"}],\"isParent\":true,\"objectName\":\"Account\"}],\"generalSearch_Folio\":[{\"fieldSetName\":\"SearchFieldsFolioGeneral\",\"headers\":[],\"isParent\":true,\"objectName\":\"Property__c\"}],\"generalsearch_RegisteredLease\":[{\"fieldSetName\":\"SearchFieldsLeaseGeneral\",\"headers\":[],\"isParent\":true,\"objectName\":\"Linked_Unit__c\"}],\"generalSearch_StrataLot\":[{\"fieldSetName\":\"SearchFieldsStrataLotGeneral\",\"headers\":[],\"isParent\":true,\"objectName\":\"Property__c\"}],\"generalSearch_StrataPlan\":[{\"fieldSetName\":\"SearchFieldsStrataPlanGeneral\",\"headers\":[],\"isParent\":true,\"objectName\":\"Property__c\"}],\"orderByFields\":\"Name\",\"resultFieldSet\":\"RequestAccessSearchResult\",\"showAdvancedSearch\":false,\"showRegisteredEntities\":true,\"pageNumber\":1,\"pageSize\":\"10\"}"
+    registration_search_string = "[{\"fieldAPIName\":\"Incorporation_Date__c\",\"value\":\"2023-10-01\",\"dataType\":\"DATE\"},{\"fieldAPIName\":\"DateOperator\",\"value\":\"between\",\"dataType\":\"PICKLIST\"},{\"fieldAPIName\":\"Incorporation_Date__c\",\"value\":\"2023-10-31\",\"dataType\":\"DATE\"}]"
+    
+    # load search strings
     search_json = json.loads(search_string)
+    registration_search_list = json.loads(registration_search_string)
+
+    # change values
+    registration_search_list[0]["value"] = from_date
+    registration_search_list[2]["value"] = to_date
     search_json["pageNumber"] = page
     search_json["pageSize"] = page_size
+
     message_data = {
     "actions": [
             {
@@ -53,7 +82,7 @@ def get_company_ids(page = 1, page_size = 10):
                         "isAdvancedSearch": True,
                         "searchMetadataProcessName": "Public Registry Search",
                         "registerType": "",
-                        "registerationDate": "[{\"fieldAPIName\":\"Incorporation_Date__c\",\"value\":\"\",\"dataType\":\"DATE\"},{\"fieldAPIName\":\"DateOperator\",\"value\":\"=\",\"dataType\":\"PICKLIST\"},{\"fieldAPIName\":\"Incorporation_Date__c\",\"value\":\"\",\"dataType\":\"DATE\"}]"
+                        "registerationDate": json.dumps(registration_search_list)
                     },
                     "cacheable": False,
                     "isContinuation": False
@@ -76,9 +105,9 @@ def get_company_ids(page = 1, page_size = 10):
             raise Exception(f"Cannot get companie ids : unexpected response status code. Error : {resp.text}")
     except Exception as e:
         raise Exception(f"Cannot get companie ids, page: {page}, page_size: {page_size}")
-    
     companies = resp.json().get("actions")[0].get("returnValue").get("returnValue").get("data").get("data")
     return [comp.get("Id") for comp in companies]
+
     
 
 
@@ -193,7 +222,7 @@ def batch_fetch_campany(company_ids):
 
 
 
-def write_to_csv(data,file_name="result.csv"):
+def write_to_csv(data,pointer_date,file_name="result.csv"):
     data_to_write = []
     for doc in data:
         genral_details = doc[0].get("returnValue").get("data").get("mpObjectsData").get("Account")[0]
@@ -207,6 +236,7 @@ def write_to_csv(data,file_name="result.csv"):
         
         recc = {
             # genral details
+            "pointer_date": pointer_date,
             "Entity_Name": genral_details.get("Name"),
             "Entity_Type": genral_details.get("Entity_Type__c"),
             "Entity_Subtype": genral_details.get("Entity_Sub_Type__c"),

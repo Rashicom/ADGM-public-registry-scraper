@@ -1,5 +1,6 @@
 fieldnames = [
         # genral details
+        "pointer_date",
         "Entity_Name",
         "Entity_Type",
         "Entity_Subtype",
