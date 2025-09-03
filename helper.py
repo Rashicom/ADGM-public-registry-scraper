@@ -27,7 +27,7 @@ def get_csv_row_count(filename="result.csv"):
 def get_last_row_date(filename = "result.csv"):
     if not os.path.exists(filename):
         # return default starting date
-        return datetime(2024,1,1).date()
+        return datetime(2015,1,1).date()
     
     last_row = None
     with open(filename, newline='', encoding='utf-8') as csvfile:
@@ -36,10 +36,10 @@ def get_last_row_date(filename = "result.csv"):
             last_row = row  # keep updating until the last one
     
     if last_row:
-        return datetime.strptime(last_row.get("pointer_date"), "%Y-%m-%d").date() if last_row.get("pointer_date") else datetime(2024,1,1).date()
+        return datetime.strptime(last_row.get("pointer_date"), "%Y-%m-%d").date() if last_row.get("pointer_date") else datetime(2015,1,1).date()
     else:
         # return default starting date
-        return datetime(2024,1,1).date()
+        return datetime(2015,1,1).date()
 
 
 # static data
