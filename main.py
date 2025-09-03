@@ -61,22 +61,3 @@ while True:
 
     # make start date as end date for the next loop
     start_date = end_date
-
-
-for i in range(target_page_count):
-    page_number = last_page_captured+i+1
-    
-    # retrieve company ids
-    batch_company_ids = get_company_ids(page=page_number, page_size=10)
-    print(Fore.MAGENTA,f"company ids for page : {page_number} ✅")
-    print(Fore.GREEN, batch_company_ids)
-
-    # batch fetch company informations
-    print(Fore.LIGHTWHITE_EX)
-    data = batch_fetch_campany(batch_company_ids)
-
-
-    # write data into csv
-    write_to_csv(data)
-    print(Fore.CYAN,f"Total records written: {10*(i+1)}")
-    print(Fore.CYAN,f"Total records in Doc: {captured_row_count + (10*(i+1))}")
